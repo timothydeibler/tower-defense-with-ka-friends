@@ -58,6 +58,19 @@ function mouseClicked() {
 	clicked = true;
 }
 
+class Bullet {
+    constructor(x, y, w, h) {
+        this.x = x;
+        this.y = y;
+        this.w = w;
+        this.h = h;
+    }
+    display() {
+        fill(205);
+        ellipse(this.x, this.y, this.w, this.h);
+    }
+}
+
 class Button {
     constructor(x, y, r, appearance, sceneTo) {
         this.x = x;
@@ -123,6 +136,7 @@ var howButton = new Button(100, 300, 40, "how", "how");
 var leadButton = new Button(300, 300, 40, "lead", "lead");
 var backButton = new Button(350, 350, 30, "back", "menu");
 var restartButton = new Button(200, 330, 30, "restart", "menu");
+var bullet = new Bullet(100, 100, 15, 4);
 
 // Particles
 class Particle {
@@ -156,6 +170,7 @@ function menu() {
 	background(0);
 	fill(255);
     ellipse(255, 255, 255, 255);
+    bullet.display();
 
 }
 
@@ -173,6 +188,7 @@ function lead() {
 }
 draw = function() {
 	background(0, 0, 0);
+    
 	
 	switch(scene) {
 		case "menu":
