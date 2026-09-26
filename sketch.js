@@ -53,6 +53,13 @@ var clicked = false;
 var scene = "menu";
 var currLvl = 0;
 var highScore = 0;
+let input = [];
+function keyPressed() {
+    input[keyCode] = true;
+}
+function keyReleased() {
+    input[keyCode] = false;
+}
 
 function mouseClicked() {
 	clicked = true;
@@ -70,6 +77,55 @@ class Bullet {
         ellipse(this.x, this.y, this.w, this.h);
     }
 }
+
+class Tank {
+    constructor(x, y, w, h) {
+        this.x = x;
+        this.y = y;
+        this.w = w;
+        this.h = h;
+    }
+}
+
+class Cannon {
+    constructor(x, y, w, h) {
+        this.x = x;
+        this.y = y;
+        this.w = w;
+        this.h = h;
+    }
+}
+
+class MovingCannon extends Tank {
+    constructor(x, y, w, h, health) {
+        super(x, y, w, h);
+        this.Cannon = new Cannon(this.x, this.y + this.w / 3, this.w / 2, this.h / 2);
+        this.health = health;
+        this.velocity = 3;
+    }
+    display() {
+        fill(100);
+        rect(this.x, this.y, this.w, this.h);
+    }
+    move() {
+        if (input[LEFT]) {
+            this.x -= this.velocity;
+        }
+        if (input[RIGHT]) {
+            this.x += this.velocity;
+        }
+        if (input[DOWN]) {
+            this.y -= this.velocity;
+        }
+        if (input[UP]) {
+            this.y += this.velocity;
+        }
+        println(this.x);
+        
+    }
+}
+
+
 
 class Button {
     constructor(x, y, r, appearance, sceneTo) {
@@ -137,6 +193,7 @@ var leadButton = new Button(300, 300, 40, "lead", "lead");
 var backButton = new Button(350, 350, 30, "back", "menu");
 var restartButton = new Button(200, 330, 30, "restart", "menu");
 var bullet = new Bullet(100, 100, 15, 4);
+var movingCannon = new MovingCannon(100, 100, 100, 100, 100);
 
 // Particles
 class Particle {
@@ -167,10 +224,12 @@ function game() {
 
 function menu() {
 	// change to softer gradient
-	background(0);
-	fill(255);
-    ellipse(255, 255, 255, 255);
+	background(140, 255, 50);
+	
+
     bullet.display();
+    movingCannon.display();
+    movingCannon.move();
 
 }
 
