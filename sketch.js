@@ -54,27 +54,77 @@ var scene = "menu";
 var currLvl = 0;
 var highScore = 0;
 let input = [];
-function keyPressed() {
-    input[keyCode] = true;
-}
-function keyReleased() {
-    input[keyCode] = false;
-}
 
 function mouseClicked() {
 	clicked = true;
 }
 
+
+/* @Description: global rectangle to recentagle collisions
+* @param {integer} rect1 - the first rectangle of the collision
+* @param {integer} rect2 - the second rectange of the collision
+*/
+function rectToRectCollide(rect1, rect2) {
+    return rect1.x < rect2.x + rect2.w && 
+            rect1.x > rect2.x - rect1.w &&
+            rect1.y < rect2.y + rect2.h && 
+            rect1.y > rect2.y - rect1.h;
+
+}
+
 class Bullet {
-    constructor(x, y, w, h) {
+    constructor(x, y, w, h, damage, velocity) {
         this.x = x;
         this.y = y;
         this.w = w;
         this.h = h;
+        this.damage = damage;
+        this.velocity = velocity;
     }
     display() {
         fill(205);
         ellipse(this.x, this.y, this.w, this.h);
+    }
+}
+
+class Cannonball extends Bullet {
+    constructor(x, y, w, h, damage, velocity, direction) {
+        super(x, y, w, h, damage, velocity);
+        this.z = 0;
+        this.direction = "left";
+        this.smokeParticles = [
+            new Particle(this.x, this.y, 50),
+            new Particle(this.x, this.y, 50),
+            new Particle(this.x, this.y, 50),
+            new Particle(this.x, this.y, 50),
+            new Particle(this.x, this.y, 50),
+        ]
+    }
+    display() {
+        fill(0);
+        ellipse(this.x, this.y, this.w, this.h);
+    }
+    update() {
+        switch (this.direction) {
+            case "left":
+                this.x -= this.velocity;
+                break;
+            case "right":
+                this.x += this.velocity;
+                break;
+            case "up":
+                this.y -= this.velocity;
+                break;
+            case "down":
+                this.y += this.velocity;
+                break;
+        }
+        for (let i = 0; i < this.smokeParticles.length; i++) {
+            if (this.smokeParticles[i].transparency > 0) {
+                this.smokeParticles[i].run();
+                this.smokeParticles[i].y -= 5;
+            }
+        }
     }
 }
 
@@ -102,6 +152,10 @@ class MovingCannon extends Tank {
         this.Cannon = new Cannon(this.x, this.y + this.w / 3, this.w / 2, this.h / 2);
         this.health = health;
         this.velocity = 3;
+        this.direction = "left";
+        this.firing = false;
+        this.reload = 0;
+        this.cannonballs = [];
     }
     display() {
         fill(100);
@@ -120,8 +174,19 @@ class MovingCannon extends Tank {
         if (input[UP]) {
             this.y += this.velocity;
         }
-        println(this.x);
         
+    }
+    fire() {
+        if (this.firing && this.reloadTimer <= 0) {
+            this.cannonballs.push(new Cannonball(this.x, this.y, 20, 20, 20, 10, "left"));
+        }
+    }
+    update() {
+        for (let i = this.cannonballs.length - 1; i >= 0; i--) {
+            let currBall = this.cannonballs[i];
+            currBall.display();
+            currBall.update();
+        }
     }
 }
 
@@ -266,6 +331,12 @@ draw = function() {
 	
 	clicked = false;
 };
+
+keyPressed = (() => input[keyCode] = true);
+
+keyReleased = (() => input[keyCode] = false);
+
+
 }
 
 runPJS(program);
