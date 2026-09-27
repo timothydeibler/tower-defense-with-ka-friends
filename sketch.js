@@ -93,16 +93,16 @@ class Cannonball extends Bullet {
         this.z = 0;
         this.direction = "left";
         this.smokeParticles = [
-            new Particle(this.x, this.y, 50),
-            new Particle(this.x, this.y, 50),
-            new Particle(this.x, this.y, 50),
-            new Particle(this.x, this.y, 50),
-            new Particle(this.x, this.y, 50),
+            new Particle(this.x, this.y, 5, 300),
+            new Particle(this.x, this.y, 4, 300),
+            new Particle(this.x, this.y, 6, 300),
+            new Particle(this.x, this.y, 7, 300),
+            new Particle(this.x, this.y, 6, 300),
         ]
     }
     display() {
         fill(0);
-        ellipse(this.x, this.y, this.w, this.h);
+        ellipse(this.x, this.y, this.w * 2, this.h * 2);
     }
     update() {
         switch (this.direction) {
@@ -153,8 +153,8 @@ class MovingCannon extends Tank {
         this.health = health;
         this.velocity = 3;
         this.direction = "left";
-        this.firing = false;
-        this.reload = 0;
+        this.firing = true; // hard coded to true until we have enemies
+        this.reloadTimer = 0;
         this.cannonballs = [];
     }
     display() {
@@ -179,13 +179,18 @@ class MovingCannon extends Tank {
     fire() {
         if (this.firing && this.reloadTimer <= 0) {
             this.cannonballs.push(new Cannonball(this.x, this.y, 20, 20, 20, 10, "left"));
+            this.reloadTimer = 100;
         }
     }
     update() {
+        // move this outside to check against outer objects, perhaps?
         for (let i = this.cannonballs.length - 1; i >= 0; i--) {
             let currBall = this.cannonballs[i];
             currBall.display();
             currBall.update();
+        }
+        if (this.reloadTimer > 0) {
+            this.reloadTimer--;
         }
     }
 }
@@ -262,11 +267,11 @@ var movingCannon = new MovingCannon(100, 100, 100, 100, 100);
 
 // Particles
 class Particle {
-    constructor(x, y, timer) {
+    constructor(x, y, velocity, timer) {
         this.x = x;
         this.y = y;
         this.angle = random(0, 360);
-        this.velocity = random(1, 10);
+        this.velocity = velocity;
         this.r = random(2, 4);
         this.transparency = timer;
     }
@@ -295,6 +300,10 @@ function menu() {
     bullet.display();
     movingCannon.display();
     movingCannon.move();
+    movingCannon.update();
+    if (input[32]) {
+        movingCannon.fire();
+    }
 
 }
 
