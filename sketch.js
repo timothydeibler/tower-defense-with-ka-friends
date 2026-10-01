@@ -195,6 +195,72 @@ class MovingCannon extends Tank {
     }
 }
 
+class Enemy {
+    constructor(x, y, w, h, velocity, health) {
+        this.x = x;
+        this.y = y;
+        this.w = w;
+        this.h = h;
+        this.velocity = velocity;
+        this.health = health;
+    }
+}
+
+
+class Wolf extends Enemy {
+    constructor(x, y, w, h, velocity, health) {
+        super(x, y, w, h, velocity, health);
+        this.path = [];
+    }
+    display() {
+        // dummy rect, graphic in progress by @happyyes
+        fill(120);
+        rect(this.x, this.y, this.w, this.h);
+    }
+    pathfinding() {
+        // dummy path until @ty11ty makes the algorithm
+        this.path = ["R", "U", "R", "U", "R", "D", "D", "R", "R", "U", "R"];
+    }
+    update() {
+        this.pathfinding(); // ehhh mOdUlArIty
+        // this outer loop runs through each instruction in the instruction set
+        for (let i = 0; i < this.path.length; i++) {
+            // each instruction, reset those to 0.
+            let currentVelocityInstruction = {
+                x: 0,
+                y: 0
+            };
+            // now parse the instruction character. Since we initialize the currVelInst to 0 for both
+            // x and y, we 
+            switch (this.path[i]) {
+                case "R":
+                    currentVelocityInstruction.x += this.velocity;
+                    break;
+                case "L":
+                    currentVelocityInstruction.x -= this.velocity;
+                    break;
+                case "D":
+                    currentVelocityInstruction.y += this.velocity;
+                    break;
+                case "U":
+                    currentVelocityInstruction.y -= this.velocity;
+                    break;                
+            }
+            for (let j = 0; j < 4; j++) {
+                if (this.checkEdges()) {
+                    this.x += currentVelocityInstruction.x;
+                    this.y += currentVelocityInstruction.y;
+                }
+            }
+        }
+    }
+    checkEdges() {
+        return this.x + this.w < width 
+            && this.x > 0 
+            && this.y + this.h < height
+            && this.y > 0
+    }
+}
 
 
 class Button {
@@ -264,6 +330,7 @@ var backButton = new Button(350, 350, 30, "back", "menu");
 var restartButton = new Button(200, 330, 30, "restart", "menu");
 var bullet = new Bullet(100, 100, 15, 4);
 var movingCannon = new MovingCannon(100, 100, 100, 100, 100);
+let wolf = new Wolf(25, 350, 50, 50, 0.25, 100);
 
 // Particles
 class Particle {
@@ -304,6 +371,8 @@ function menu() {
     if (input[32]) {
         movingCannon.fire();
     }
+    wolf.display();
+    wolf.update();
 
 }
 
