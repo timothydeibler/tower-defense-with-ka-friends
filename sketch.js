@@ -211,6 +211,7 @@ class Wolf extends Enemy {
     constructor(x, y, w, h, velocity, health) {
         super(x, y, w, h, velocity, health);
         this.path = [];
+        this.currentPath = [];
     }
     display() {
         // dummy rect, graphic in progress by @happyyes
@@ -219,40 +220,52 @@ class Wolf extends Enemy {
     }
     pathfinding() {
         // dummy path until @ty11ty makes the algorithm
-        this.path = ["R", "U", "R", "U", "R", "D", "D", "R", "R", "U", "R"];
+        this.path = ["R", "R", "R", "R", "R", "R", "U", "U", "U", "R", "R", "R", "R", "R", "R",
+            "U", "U", "U", "U", "U", "R", "R", "R", "R", "R", "R", "R", "R", "R", "R", "R", "R",
+            "D", "D", "D", "D", "R", "R", "U", "R"];
     }
     update() {
-        this.pathfinding(); // ehhh mOdUlArIty
-        // this outer loop runs through each instruction in the instruction set
-        for (let i = 0; i < this.path.length; i++) {
-            // each instruction, reset those to 0.
-            let currentVelocityInstruction = {
-                x: 0,
-                y: 0
-            };
-            // now parse the instruction character. Since we initialize the currVelInst to 0 for both
-            // x and y, we 
-            switch (this.path[i]) {
-                case "R":
-                    currentVelocityInstruction.x += this.velocity;
-                    break;
-                case "L":
-                    currentVelocityInstruction.x -= this.velocity;
-                    break;
-                case "D":
-                    currentVelocityInstruction.y += this.velocity;
-                    break;
-                case "U":
-                    currentVelocityInstruction.y -= this.velocity;
-                    break;                
-            }
-            for (let j = 0; j < 4; j++) {
-                if (this.checkEdges()) {
-                    this.x += currentVelocityInstruction.x;
-                    this.y += currentVelocityInstruction.y;
-                }
+        if (this.currentPath.length === 0) {
+            this.pathfinding();
+            for (let i = this.path.length - 1; i >= 0; i--) {
+                this.currentPath.push(this.path[i]);
             }
         }
+
+        // each instruction, reset those to 0.
+        let currentVelocityInstruction = {
+            x: 0,
+            y: 0
+        };
+        // now parse the instruction character. Since we initialize the currVelInst to 0 for both
+        // x and y, we 
+        switch (this.currentPath[this.currentPath.length - 1]) {
+            case "R":
+                currentVelocityInstruction.x += this.velocity;
+                break;
+            case "L":
+                currentVelocityInstruction.x -= this.velocity;
+                break;
+            case "D":
+                currentVelocityInstruction.y += this.velocity;
+                break;
+            case "U":
+                currentVelocityInstruction.y -= this.velocity;
+                break; 
+            default:
+                println("this should never occur");
+                break;              
+        }
+
+        if (this.checkEdges()) {
+            //println("inside");
+            this.x += currentVelocityInstruction.x;
+            this.y += currentVelocityInstruction.y;
+        }
+
+        // remove last element (path is backwards to keep it O(1))
+        this.currentPath.pop();
+        
     }
     checkEdges() {
         return this.x + this.w < width 
@@ -330,7 +343,7 @@ var backButton = new Button(350, 350, 30, "back", "menu");
 var restartButton = new Button(200, 330, 30, "restart", "menu");
 var bullet = new Bullet(100, 100, 15, 4);
 var movingCannon = new MovingCannon(100, 100, 100, 100, 100);
-let wolf = new Wolf(25, 350, 50, 50, 0.25, 100);
+let wolf = new Wolf(25, 350, 50, 50, 3, 100);
 
 // Particles
 class Particle {
@@ -412,7 +425,7 @@ draw = function() {
 
 keyPressed = (() => input[keyCode] = true);
 
-keyReleased = (() => input[keyCode] = false);
+keyReleased = (() => input[keyCode] = false);3
 
 
 }
