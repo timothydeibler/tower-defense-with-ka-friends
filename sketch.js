@@ -90,8 +90,12 @@ class Bullet {
 class Cannonball extends Bullet {
     constructor(x, y, w, h, damage, velocity, direction) {
         super(x, y, w, h, damage, velocity);
-        this.z = 0;
-        this.direction = "left";
+        this.z = 7; // I actually need to check the height oh dear LOL. Units in feet.
+        this.initalYVelocity = 700; // might make this a parameter later, let's just do real physics for cannons lol
+        this.gravityAcceleration = 32; // ft/s constant
+        this.direction = /*direction ?? */ "left";
+        this.t = 0;
+        this.theta = 45;
         this.smokeParticles = [
             new Particle(this.x, this.y, 5, 300),
             new Particle(this.x, this.y, 4, 300),
@@ -125,6 +129,23 @@ class Cannonball extends Bullet {
                 this.smokeParticles[i].y -= 5;
             }
         }
+        // z = v0sin(theta) - 1/2gt^2 from wikipedia lol I kind of forgot
+        this.z = this.initalYVelocity * this.t * 0.707 - (0.5 * this.gravityAcceleration * (this.t * this.t));
+        if (this.z < 0) {
+            // shoot out particles, so set z below so collisions stop running (cannot splice so particles still run)
+            this.z = 7;
+            noLoop();
+            
+            // once timer done set this.t back to 0 for next cannonball
+        } else {
+            this.t++;
+        }
+        
+
+        println(this.z);
+
+        // update this after so the first frame has intial velocity
+        //this.initalYVelocity -= this.gravityAcceleration;
     }
 }
 
@@ -143,19 +164,55 @@ class Cannon {
         this.y = y;
         this.w = w;
         this.h = h;
+        this.cannonballs = [];
+        this.firing = true; // hard coded to true until we have enemies
+        this.reloadTimer = 0;
     }
+    display() {
+        fill(0);
+        ellipse(this.x, this.y, this.w, this.h);
+    }
+    load(amount) {
+        for (let i = 0; i < amount; i++) {
+            this.cannonballs.push(new Cannonball(this.x, this.y, 20, 20, 20, 25, "left"))
+        }
+        
+    }
+    fire() {
+        if (this.firing && this.reloadTimer <= 0) {
+            this.cannonballs.push(new Cannonball(this.x, this.y, 20, 20, 20, 10, "left"));
+            this.reloadTimer = 100;
+        }
+    }
+    update() {
+        // move this outside to check against outer objects, perhaps?
+        for (let i = this.cannonballs.length - 1; i >= 0; i--) {
+
+            let currBall = this.cannonballs[i];
+            currBall.display();
+            currBall.update();
+        }
+        if (this.reloadTimer > 0) {
+            this.reloadTimer--;
+        }
+    }
+    // findEntitesWithinRange(enemies, items) {
+    //     while (enemies.length !== 0) {
+    //         let currEnemy = enemies.pop();
+    //         const this.lifetime
+    //         currEnemy.velocity;
+    //     }
+    // }
 }
 
 class MovingCannon extends Tank {
     constructor(x, y, w, h, health) {
         super(x, y, w, h);
-        this.Cannon = new Cannon(this.x, this.y + this.w / 3, this.w / 2, this.h / 2);
+        this.cannon = new Cannon(this.x, this.y + this.w / 3, this.w / 2, this.h / 2);
         this.health = health;
         this.velocity = 3;
         this.direction = "left";
         this.firing = true; // hard coded to true until we have enemies
-        this.reloadTimer = 0;
-        this.cannonballs = [];
     }
     display() {
         fill(100);
@@ -169,30 +226,23 @@ class MovingCannon extends Tank {
             this.x += this.velocity;
         }
         if (input[DOWN]) {
-            this.y -= this.velocity;
+            this.y += this.velocity;
         }
         if (input[UP]) {
-            this.y += this.velocity;
+            this.y -= this.velocity;
         }
         
     }
-    fire() {
-        if (this.firing && this.reloadTimer <= 0) {
-            this.cannonballs.push(new Cannonball(this.x, this.y, 20, 20, 20, 10, "left"));
-            this.reloadTimer = 100;
-        }
-    }
     update() {
-        // move this outside to check against outer objects, perhaps?
-        for (let i = this.cannonballs.length - 1; i >= 0; i--) {
-            let currBall = this.cannonballs[i];
-            currBall.display();
-            currBall.update();
+        if (input[32]) {
+            this.cannon.fire();
         }
-        if (this.reloadTimer > 0) {
-            this.reloadTimer--;
-        }
+        this.cannon.update();
+        this.cannon.display();
+        this.cannon.x = this.x
+        this.cannon.y = this.y;
     }
+    
 }
 
 class Enemy {
@@ -258,7 +308,6 @@ class Wolf extends Enemy {
         }
 
         if (this.checkEdges()) {
-            //println("inside");
             this.x += currentVelocityInstruction.x;
             this.y += currentVelocityInstruction.y;
         }
@@ -381,9 +430,7 @@ function menu() {
     movingCannon.display();
     movingCannon.move();
     movingCannon.update();
-    if (input[32]) {
-        movingCannon.fire();
-    }
+    
     wolf.display();
     wolf.update();
 
