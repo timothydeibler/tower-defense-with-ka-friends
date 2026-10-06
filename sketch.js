@@ -55,7 +55,7 @@ var currLvl = 0;
 var highScore = 0;
 let input = [];
 
-function mouseClicked() {
+mouseClicked = function() {
 	clicked = true;
 }
 
@@ -96,13 +96,56 @@ class Cannonball extends Bullet {
         this.direction = /*direction ?? */ "left";
         this.t = 0;
         this.theta = 45;
-        this.smokeParticles = [
-            new Particle(this.x, this.y, 5, 300),
-            new Particle(this.x, this.y, 4, 300),
-            new Particle(this.x, this.y, 6, 300),
-            new Particle(this.x, this.y, 7, 300),
-            new Particle(this.x, this.y, 6, 300),
-        ]
+        this.smokeParticles = this.createSmokeParticles();
+        this.explosionParticles = [];
+    }
+    createSmokeParticles() {
+        let toReturn = [];
+        for (let i = 0; i < 12; i++) {
+            toReturn.push(new Particle(this.x, this.y, random(5, 12), random(0.4, 1.4),
+                {
+                    red: random(230, 255),
+                    green: random(200, 255), 
+                    blue: random(210, 255),
+                },
+                300));
+        }
+        return toReturn;
+    }
+    createExplosionParticles() {
+        // this creates them at the currentX and Y, where I need them to be created at, rather than the initial x and Y
+        this.explosionParticles.push(new Particle(this.x, this.y, 2, 3,
+            {
+                red: 240,
+                green: 35, 
+                blue: 30,
+            },
+            300));
+        this.explosionParticles.push(new Particle(this.x, this.y, 2, 2,
+            {
+                red: 240,
+                green: 23, 
+                blue: 23,
+            },
+            300));
+        
+        // me realizing a for loop is the way to go here
+        for (let i = 0; i < 13; i++) {
+            this.explosionParticles.push(new Particle(this.x, this.y, random(5, 12), random(0.5, 1.5),
+                {
+                    red: 0,
+                    green: 0, 
+                    blue: 0,
+                },
+                random(200, 400)));
+        }
+        this.explosionParticles.push(new Particle(this.x, this.y, 2, 2,
+            {
+                red: 122,
+                green: 125, 
+                blue: 145,
+            },
+            300));
     }
     display() {
         fill(0);
@@ -124,28 +167,35 @@ class Cannonball extends Bullet {
                 break;
         }
         for (let i = 0; i < this.smokeParticles.length; i++) {
-            if (this.smokeParticles[i].transparency > 0) {
-                this.smokeParticles[i].run();
-                this.smokeParticles[i].y -= 5;
+            let currParticle = this.smokeParticles[i];
+            if (currParticle.transparency > 0) {
+                currParticle.run();
+                currParticle.y -= random(-1, 3.75);
+                currParticle.x += random(-1.5, 1.5);
             }
         }
         // z = v0sin(theta) - 1/2gt^2 from wikipedia lol I kind of forgot
         this.z = this.initalYVelocity * this.t * 0.707 - (0.5 * this.gravityAcceleration * (this.t * this.t));
         if (this.z < 0) {
             // shoot out particles, so set z below so collisions stop running (cannot splice so particles still run)
-            this.z = 7;
-            noLoop();
+            this.z = -7;
+            this.w = 0;
+            this.h = 0;
+            // I forgot to do this and wondered why I did not work skull
+            if (this.explosionParticles.length === 0) {
+                this.createExplosionParticles();
+            }
+            for (let i = 0; i < this.explosionParticles.length; i++) {
+                let currParticle = this.explosionParticles[i];
+                if (currParticle.transparency > 0) {               
+                    currParticle.run();
+                }
+            }
             
             // once timer done set this.t back to 0 for next cannonball
         } else {
             this.t++;
         }
-        
-
-        println(this.z);
-
-        // update this after so the first frame has intial velocity
-        //this.initalYVelocity -= this.gravityAcceleration;
     }
 }
 
@@ -324,6 +374,52 @@ class Wolf extends Enemy {
     }
 }
 
+class TankMenu {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.sliding = "null";
+    }
+    display() {
+        fill(100);
+        rect(this.x - 20, this.y + 280, 20, 40);
+        fill(30);
+        if (this.sliding === "null" || this.sliding === "out") {
+            triangle(this.x - 15, this.y + 300, this.x - 5, this.y + 290, this.x - 5, this.y + 310);
+        } else {
+            triangle(this.x - 5, this.y + 300, this.x - 15, this.y + 290, this.x - 15, this.y + 310);
+        }
+        fill(240);
+        rect(this.x, this.y, 100, 600);
+        for (let i = 20; i < 560; i += 110) {
+            fill(180);
+            rect(this.x + 20, i, 60, 100);
+            fill(0);
+            text("Tank here", this.x + 50, i + 50);
+        }
+    }
+    update() {
+        if (rectToRectCollide({x: mouseX, y: mouseY, w: 0, h: 0}, {x: this.x - 20, y: this.y + 280, w: 20, h: 40}) && clicked) {
+            if (this.sliding === "null") {
+                this.sliding = this.x > 550 ? "out" : "in";
+            } else if (this.sliding === "out") {
+                this.sliding = "in";
+            } else if (this.sliding === "in") {
+                this.sliding = "out";
+                println(this.sliding);
+            }
+        } 
+
+        if (this.x > 500 && this.sliding === "out") {
+            this.x -= 2;
+        } else if (this.x < 600 && this.sliding === "in") {
+            this.x += 2;
+        } else if (this.x <= 500 || this.x >= 600) {
+            this.sliding = "null";
+        }
+
+    }
+}
 
 class Button {
     constructor(x, y, r, appearance, sceneTo) {
@@ -393,25 +489,28 @@ var restartButton = new Button(200, 330, 30, "restart", "menu");
 var bullet = new Bullet(100, 100, 15, 4);
 var movingCannon = new MovingCannon(100, 100, 100, 100, 100);
 let wolf = new Wolf(25, 350, 50, 50, 3, 100);
+let component = new TankMenu(599, 0);
 
 // Particles
 class Particle {
-    constructor(x, y, velocity, timer) {
+    constructor(x, y, size, velocity, color, timer) {
         this.x = x;
         this.y = y;
+        this.size = size;
         this.angle = random(0, 360);
         this.velocity = velocity;
         this.r = random(2, 4);
+        this.color = color;
         this.transparency = timer;
     }
     run() {
-        fill(255, 255, 255, this.transparency);
-        ellipse(this.x, this.y, 4, 4);
+        fill(this.color.red, this.color.green, this.color.blue, this.transparency);
+        ellipse(this.x, this.y, this.size, this.size);
         // fine I will use basic trig rather than random. Basically think of velocity as a vector (b/c it is) and then I am breaking it down into its x and y components. I can explain more if you have questions.
         this.x += this.velocity * cos(this.angle);
         this.y += this.velocity * sin(this.angle);
         // I think this should be fine, idk let's see
-        this.transparency -= random(2, 5);
+        this.transparency -= random(4, 5);
     }
 }
 
@@ -433,6 +532,8 @@ function menu() {
     
     wolf.display();
     wolf.update();
+    component.display();
+    component.update();
 
 }
 
@@ -472,7 +573,7 @@ draw = function() {
 
 keyPressed = (() => input[keyCode] = true);
 
-keyReleased = (() => input[keyCode] = false);3
+keyReleased = (() => input[keyCode] = false);
 
 
 }
