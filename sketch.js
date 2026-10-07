@@ -50,13 +50,48 @@ noStroke();
 textAlign(CENTER, CENTER);
 textFont(createFont("calibri"));
 var clicked = false;
-var scene = "menu";
+var scene = "load";
 var currLvl = 0;
 var highScore = 0;
 let input = [];
 
 mouseClicked = function() {
 	clicked = true;
+}
+
+const img = {
+    "tank1": function() {
+        background(0, 0);
+        fill(100, 40, 40);
+        rect(10, 0, 40, 40);
+        fill(0);
+        rect(0, 15, 10, 10);
+        return get(0, 0, 100, 100);
+    },
+    "tank2": function() {
+        background(0, 0);
+        fill(40, 100, 40);
+        rect(10, 0, 40, 40);
+        fill(0);
+        rect(0, 15, 10, 10);
+        return get(0, 0, 100, 100);
+    },
+    "tank3": function() {
+        background(0, 0);
+        fill(40, 40, 100);
+        rect(10, 0, 40, 40);
+        fill(0);
+        rect(0, 15, 10, 10);
+        return get(0, 0, 100, 100);
+    },
+    "cannon": function() {
+        background(0, 0);
+        fill(0);
+        ellipse(15, 15, 15, 15);
+        rect(15, 7.5, 30, 15);
+        ellipse(45, 15, 15, 15);
+        return get(0, 0, 100, 100);
+    }
 }
 
 
@@ -209,28 +244,28 @@ class Tank {
 }
 
 class Cannon {
-    constructor(x, y, w, h) {
+    constructor(x, y, w, h, appearance) {
         this.x = x;
         this.y = y;
         this.w = w;
         this.h = h;
+        this.appearance = appearance;
         this.cannonballs = [];
         this.firing = true; // hard coded to true until we have enemies
         this.reloadTimer = 0;
     }
     display() {
-        fill(0);
-        ellipse(this.x, this.y, this.w, this.h);
+        image(img[this.appearance], this.x, this.y);
     }
     load(amount) {
         for (let i = 0; i < amount; i++) {
-            this.cannonballs.push(new Cannonball(this.x, this.y, 20, 20, 20, 25, "left"))
+            this.cannonballs.push(new Cannonball(this.x, this.y, 8, 8, 20, 25, "left"))
         }
         
     }
     fire() {
         if (this.firing && this.reloadTimer <= 0) {
-            this.cannonballs.push(new Cannonball(this.x, this.y, 20, 20, 20, 10, "left"));
+            this.cannonballs.push(new Cannonball(this.x, this.y, 5, 5, 20, 10, "left"));
             this.reloadTimer = 100;
         }
     }
@@ -258,7 +293,7 @@ class Cannon {
 class MovingCannon extends Tank {
     constructor(x, y, w, h, health) {
         super(x, y, w, h);
-        this.cannon = new Cannon(this.x, this.y + this.w / 3, this.w / 2, this.h / 2);
+        this.cannon = new Cannon(this.x, this.y + this.w / 3, this.w / 2, this.h / 2, "cannon");
         this.health = health;
         this.velocity = 3;
         this.direction = "left";
@@ -374,6 +409,37 @@ class Wolf extends Enemy {
     }
 }
 
+
+class ShopButton {
+    constructor(x, y, w, h, cost, item) {
+        this.x = x;
+        this.y = y;
+        this.w = w;
+        this.h = h;
+        this.cost = cost;
+        this.item = item;
+        this.canPlace = false;
+        this.placed = false;
+        this.followMouse = false;
+    }
+    display() {
+        if (rectToRectCollide({x: mouseX, y: mouseY, w: 0, h: 0}, this)) {
+            fill(0, 0, 0, 40);
+            if (clicked) {
+                this.followMouse = true;
+            }
+        }
+        if (this.followMouse) {
+            this.item.x = mouseX;
+            this.item.y = mouseY;
+        } 
+        this.item.display();
+    }
+    update() {
+        
+    }
+}
+
 class TankMenu {
     constructor(x, y) {
         this.x = x;
@@ -381,8 +447,8 @@ class TankMenu {
         this.sliding = "null";
     }
     display() {
-        fill(100);
-        rect(this.x - 20, this.y + 280, 20, 40);
+        fill(140, 180, 210);
+        rect(this.x - 20, this.y + 280, 20, 40, 5);
         fill(30);
         if (this.sliding === "null" || this.sliding === "out") {
             triangle(this.x - 15, this.y + 300, this.x - 5, this.y + 290, this.x - 5, this.y + 310);
@@ -391,23 +457,28 @@ class TankMenu {
         }
         fill(240);
         rect(this.x, this.y, 100, 600);
-        for (let i = 20; i < 560; i += 110) {
-            fill(180);
-            rect(this.x + 20, i, 60, 100);
+        for (let i = 20; i < 560; i += 55) {
+            fill(220);
+            rect(this.x + 20, i, 60, 50, 5);
             fill(0);
-            text("Tank here", this.x + 50, i + 50);
+            text("Tank here", this.x + 50, i + 25);
+            // create tank here or in update idk I am tired
         }
     }
     update() {
-        if (rectToRectCollide({x: mouseX, y: mouseY, w: 0, h: 0}, {x: this.x - 20, y: this.y + 280, w: 20, h: 40}) && clicked) {
-            if (this.sliding === "null") {
-                this.sliding = this.x > 550 ? "out" : "in";
-            } else if (this.sliding === "out") {
-                this.sliding = "in";
-            } else if (this.sliding === "in") {
-                this.sliding = "out";
-                println(this.sliding);
+        if (rectToRectCollide({x: mouseX, y: mouseY, w: 0, h: 0}, {x: this.x - 20, y: this.y + 280, w: 20, h: 40})) {
+            if (clicked) {
+                if (this.sliding === "null") {
+                    this.sliding = this.x > 550 ? "out" : "in";
+                } else if (this.sliding === "out") {
+                    this.sliding = "in";
+                } else if (this.sliding === "in") {
+                    this.sliding = "out";
+                    println(this.sliding);
+                }
             }
+            fill(0, 0, 0, 50);
+            rect(this.x - 20, this.y + 280, 20, 40, 5);
         } 
 
         if (this.x > 500 && this.sliding === "out") {
@@ -520,6 +591,27 @@ function game() {
 
 }
 
+// image loading
+var curLoad = 0;
+function load(s) {
+    var obj = Object.keys(img);
+    var imgKey = obj[curLoad];
+    img[obj[curLoad]] = img[obj[curLoad]]();
+        
+    curLoad++;
+        
+    if (curLoad >= obj.length) {
+        scene = s;
+    }
+    
+    pushStyle();
+        background(0, 0, 200);
+        fill(255);
+        textSize(30);
+        text("Loading\n " + obj[curLoad], width/2, height/2.5);
+    popStyle();
+}
+
 function menu() {
 	// change to softer gradient
 	background(140, 255, 50);
@@ -534,6 +626,9 @@ function menu() {
     wolf.update();
     component.display();
     component.update();
+    image(img.tank1, 10, 250);
+    image(img.tank2, 50, 350);
+    image(img.tank3, 410, 450);
 
 }
 
@@ -554,6 +649,9 @@ draw = function() {
     
 	
 	switch(scene) {
+        case "load":
+            load("menu");
+            break;
 		case "menu":
 			menu();
 			break;
