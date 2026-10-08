@@ -291,17 +291,17 @@ class Cannon {
 }
 
 class MovingCannon extends Tank {
-    constructor(x, y, w, h, health) {
+    constructor(x, y, w, h, health, tankType, cannonType) {
         super(x, y, w, h);
-        this.cannon = new Cannon(this.x, this.y + this.w / 3, this.w / 2, this.h / 2, "cannon");
+        this.cannon = new Cannon(this.x, this.y + this.w / 3, this.w / 2, this.h / 2, cannonType);
         this.health = health;
+        this.tankType = tankType;
         this.velocity = 3;
         this.direction = "left";
         this.firing = true; // hard coded to true until we have enemies
     }
     display() {
-        fill(100);
-        rect(this.x, this.y, this.w, this.h);
+        image(img[tankType], this.x, this.y, this.w, this.h);
     }
     move() {
         if (input[LEFT]) {
@@ -418,20 +418,37 @@ class ShopButton {
         this.h = h;
         this.cost = cost;
         this.item = item;
+        this.created = null;
         this.canPlace = false;
         this.placed = false;
         this.followMouse = false;
+    }
+    createItem(item) {
+        switch(item) {
+            // internet seems divided on whether this is bad practice or not so let me know in the comments.
+            // The mdn docs mention this is possible on the switch page therefore I think it is okay.
+            case "tank1":
+                return new MovingCannon(this.x, this.y, this.w, this.h, 200, "tank1", "cannon");
+            case "tank2":
+                return new MovingCannon(this.x, this.y, this.w, this.h, 200, "tank1", "cannon");
+            case "tank3":
+                return new MovingCannon(this.x, this.y, this.w, this.h, 200, "tank1", "cannon");
+            default:
+                return println("this should never occur");
+        }
     }
     display() {
         if (rectToRectCollide({x: mouseX, y: mouseY, w: 0, h: 0}, this)) {
             fill(0, 0, 0, 40);
             if (clicked) {
                 this.followMouse = true;
+                // add price controls later
+                this.created = this.createItem(this.item);
             }
         }
         if (this.followMouse) {
-            this.item.x = mouseX;
-            this.item.y = mouseY;
+            this.created.x = mouseX;
+            this.created.y = mouseY;
         } 
         this.item.display();
     }
@@ -460,6 +477,7 @@ class TankMenu {
         for (let i = 20; i < 560; i += 55) {
             fill(220);
             rect(this.x + 20, i, 60, 50, 5);
+
             fill(0);
             text("Tank here", this.x + 50, i + 25);
             // create tank here or in update idk I am tired
@@ -558,7 +576,7 @@ var leadButton = new Button(300, 300, 40, "lead", "lead");
 var backButton = new Button(350, 350, 30, "back", "menu");
 var restartButton = new Button(200, 330, 30, "restart", "menu");
 var bullet = new Bullet(100, 100, 15, 4);
-var movingCannon = new MovingCannon(100, 100, 100, 100, 100);
+var movingCannon = new MovingCannon(100, 100, 100, 100, 100, "cannon");
 let wolf = new Wolf(25, 350, 50, 50, 3, 100);
 let component = new TankMenu(599, 0);
 
