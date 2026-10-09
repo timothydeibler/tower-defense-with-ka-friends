@@ -3,7 +3,7 @@
 function program() {
     
     title("TBFCS Workspace");
-    size(600, 600);
+    size(800, 600);
     
     // All code goes here
 	// All code goes here
@@ -301,7 +301,8 @@ class MovingCannon extends Tank {
         this.firing = true; // hard coded to true until we have enemies
     }
     display() {
-        image(img[tankType], this.x, this.y, this.w, this.h);
+        image(img[this.tankType], this.x, this.y);
+        this.cannon.display();
     }
     move() {
         if (input[LEFT]) {
@@ -424,15 +425,16 @@ class ShopButton {
         this.followMouse = false;
     }
     createItem(item) {
-        switch(item) {
+        println("releveant");
+        switch(item.tankType) {
             // internet seems divided on whether this is bad practice or not so let me know in the comments.
             // The mdn docs mention this is possible on the switch page therefore I think it is okay.
             case "tank1":
                 return new MovingCannon(this.x, this.y, this.w, this.h, 200, "tank1", "cannon");
             case "tank2":
-                return new MovingCannon(this.x, this.y, this.w, this.h, 200, "tank1", "cannon");
+                return new MovingCannon(this.x, this.y, this.w, this.h, 200, "tank2", "cannon");
             case "tank3":
-                return new MovingCannon(this.x, this.y, this.w, this.h, 200, "tank1", "cannon");
+                return new MovingCannon(this.x, this.y, this.w, this.h, 200, "tank3", "cannon");
             default:
                 return println("this should never occur");
         }
@@ -462,8 +464,23 @@ class TankMenu {
         this.x = x;
         this.y = y;
         this.sliding = "null";
+        this.tankButtons = [];
+        this.tankButtonsCreated = false;
+    }
+    createButtons() {
+        this.tankButtons.push(new ShopButton(this.x + 20, this.y + 20, 60, 50, 10, 
+            new MovingCannon(this.x + 20, this.y + 20, 60, 50, 10, "tank1", "cannon")));
+        this.tankButtons.push(new ShopButton(this.x + 20, this.y + 75, 60, 50, 10, 
+            new MovingCannon(this.x + 20, this.y + 75, 60, 50, 10, "tank2", "cannon")));
+        this.tankButtons.push(new ShopButton(this.x + 120, this.y + 125, 60, 50, 10, 
+            new MovingCannon(this.x + 20, this.y + 125, 60, 50, 10, "tank3", "cannon")));
     }
     display() {
+        if (this.tankButtonsCreated === false) {
+            this.createButtons();
+            this.tankButtonsCreated = true;
+        }
+        
         fill(140, 180, 210);
         rect(this.x - 20, this.y + 280, 20, 40, 5);
         fill(30);
@@ -477,10 +494,12 @@ class TankMenu {
         for (let i = 20; i < 560; i += 55) {
             fill(220);
             rect(this.x + 20, i, 60, 50, 5);
-
+            
             fill(0);
             text("Tank here", this.x + 50, i + 25);
-            // create tank here or in update idk I am tired
+        }
+        for (let i = 0; i < this.tankButtons.length; i++) {
+            this.tankButtons[i].display();
         }
     }
     update() {
@@ -492,7 +511,6 @@ class TankMenu {
                     this.sliding = "in";
                 } else if (this.sliding === "in") {
                     this.sliding = "out";
-                    println(this.sliding);
                 }
             }
             fill(0, 0, 0, 50);
@@ -505,6 +523,12 @@ class TankMenu {
             this.x += 2;
         } else if (this.x <= 500 || this.x >= 600) {
             this.sliding = "null";
+        }
+        for (let i = 0; i < this.tankButtons.length; i++) {
+            this.tankButtons[i].item.x = this.x;
+            this.tankButtons[i].item.cannon.x = this.x;
+            //this.tankButtons[i].item.y = this.y;
+            //this.tankButtons[i].item.cannon.y = this.y;
         }
 
     }
@@ -576,7 +600,7 @@ var leadButton = new Button(300, 300, 40, "lead", "lead");
 var backButton = new Button(350, 350, 30, "back", "menu");
 var restartButton = new Button(200, 330, 30, "restart", "menu");
 var bullet = new Bullet(100, 100, 15, 4);
-var movingCannon = new MovingCannon(100, 100, 100, 100, 100, "cannon");
+//var movingCannon = new MovingCannon(100, 100, 100, 100, 100, "cannon");
 let wolf = new Wolf(25, 350, 50, 50, 3, 100);
 let component = new TankMenu(599, 0);
 
@@ -626,7 +650,7 @@ function load(s) {
         background(0, 0, 200);
         fill(255);
         textSize(30);
-        text("Loading\n " + obj[curLoad], width/2, height/2.5);
+        //text("Loading\n " + obj[curLoad], width/2, height/2.5);
     popStyle();
 }
 
@@ -636,9 +660,9 @@ function menu() {
 	
 
     bullet.display();
-    movingCannon.display();
-    movingCannon.move();
-    movingCannon.update();
+    // movingCannon.display();
+    // movingCannon.move();
+    // movingCannon.update();
     
     wolf.display();
     wolf.update();
