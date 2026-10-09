@@ -55,6 +55,9 @@ var currLvl = 0;
 var highScore = 0;
 let input = [];
 
+// make class later
+let playerTanks = [];
+
 mouseClicked = function() {
 	clicked = true;
 }
@@ -425,7 +428,7 @@ class ShopButton {
         this.followMouse = false;
     }
     createItem(item) {
-        println("releveant");
+        println("created");
         switch(item.tankType) {
             // internet seems divided on whether this is bad practice or not so let me know in the comments.
             // The mdn docs mention this is possible on the switch page therefore I think it is okay.
@@ -440,19 +443,34 @@ class ShopButton {
         }
     }
     display() {
-        if (rectToRectCollide({x: mouseX, y: mouseY, w: 0, h: 0}, this)) {
+        this.item.display();
+        this.canPlace = true;
+        if (rectToRectCollide({x: mouseX, y: mouseY, w: 0, h: 0}, this.item)) {
             fill(0, 0, 0, 40);
+            rect(this.item.x, this.item.y, this.item.w, this.item.h);
             if (clicked) {
                 this.followMouse = true;
                 // add price controls later
                 this.created = this.createItem(this.item);
             }
+            this.canPlace = false;
         }
         if (this.followMouse) {
-            this.created.x = mouseX;
-            this.created.y = mouseY;
+            if (this.created !== null) {
+                if (this.placed === false) {
+                    this.created.x = mouseX - (this.created.w / 2);
+                    this.created.y = mouseY - (this.created.h / 2);
+                }
+                this.created.display();
+            }
+            if (this.canPlace && clicked) {
+                this.placed = true;
+                playerTanks.push(this.created);
+                //this.created = null;
+                // free this.created somehow         
+            }
         } 
-        this.item.display();
+        
     }
     update() {
         
@@ -468,12 +486,13 @@ class TankMenu {
         this.tankButtonsCreated = false;
     }
     createButtons() {
-        this.tankButtons.push(new ShopButton(this.x + 20, this.y + 20, 60, 50, 10, 
-            new MovingCannon(this.x + 20, this.y + 20, 60, 50, 10, "tank1", "cannon")));
-        this.tankButtons.push(new ShopButton(this.x + 20, this.y + 75, 60, 50, 10, 
-            new MovingCannon(this.x + 20, this.y + 75, 60, 50, 10, "tank2", "cannon")));
-        this.tankButtons.push(new ShopButton(this.x + 120, this.y + 125, 60, 50, 10, 
-            new MovingCannon(this.x + 20, this.y + 125, 60, 50, 10, "tank3", "cannon")));
+        // the x values here are the button overlays, not the actual tanks
+        this.tankButtons.push(new ShopButton(this.x + 20, this.y + 25, 60, 50, 10, 
+            new MovingCannon(this.x + 20, this.y + 25, 60, 50, 10, "tank1", "cannon")));
+        this.tankButtons.push(new ShopButton(this.x + 20, this.y + 80, 60, 50, 10, 
+            new MovingCannon(this.x + 20, this.y + 80, 60, 50, 10, "tank2", "cannon")));
+        this.tankButtons.push(new ShopButton(this.x + 20, this.y + 135, 60, 50, 10, 
+            new MovingCannon(this.x + 20, this.y + 135, 60, 50, 10, "tank3", "cannon")));
     }
     display() {
         if (this.tankButtonsCreated === false) {
@@ -525,8 +544,8 @@ class TankMenu {
             this.sliding = "null";
         }
         for (let i = 0; i < this.tankButtons.length; i++) {
-            this.tankButtons[i].item.x = this.x;
-            this.tankButtons[i].item.cannon.x = this.x;
+            this.tankButtons[i].item.x = this.x + 20;
+            this.tankButtons[i].item.cannon.x = this.x + 20;
             //this.tankButtons[i].item.y = this.y;
             //this.tankButtons[i].item.cannon.y = this.y;
         }
@@ -671,6 +690,9 @@ function menu() {
     image(img.tank1, 10, 250);
     image(img.tank2, 50, 350);
     image(img.tank3, 410, 450);
+    for (let i = 0; i < playerTanks.length; i++) {
+        playerTanks[i].display();
+    }
 
 }
 
